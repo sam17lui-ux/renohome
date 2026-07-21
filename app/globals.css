@@ -1,0 +1,148 @@
+@import 'tailwindcss';
+
+/* ============================================================
+   Reno Board — global base
+   Palette: page #F7F3E8 · sidebar #ECE2CF · card #FCF8EE
+   Fonts (loaded via <link> in layout): Newsreader, Geist, Geist Mono
+   ============================================================ */
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+html {
+  background-color: #f7f3e8;
+}
+body {
+  background-color: transparent;
+  font-family: 'Geist', system-ui, sans-serif;
+  color: #2c2a26;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* full-page grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background-image: url('/grain.png');
+  background-size: 160px;
+  opacity: 0.07;
+  mix-blend-mode: multiply;
+}
+
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+::-webkit-scrollbar-thumb {
+  background: #e3d9c4;
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+input:focus,
+select:focus {
+  outline: none;
+}
+
+@keyframes renoPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+@keyframes renoFade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- shared hover helpers (inline styles can't express :hover) ---- */
+
+/* clay primary — base colour lives here so :hover can override it */
+.rb-clay {
+  background: #a96e4f;
+  color: #f7f3e8;
+  transition: background 0.2s, transform 0.25s, filter 0.2s;
+}
+.rb-clay:hover {
+  background: #9a6044;
+}
+.rb-clay-lift:hover {
+  transform: translateY(-2px);
+}
+
+/* card / row lift on hover */
+.rb-hoverlift {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.rb-hoverlift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 44px -24px rgba(43, 39, 36, 0.55);
+}
+
+/* subtle row tint */
+.rb-rowhover {
+  transition: background 0.16s, border-color 0.16s, color 0.16s;
+}
+.rb-rowhover:hover {
+  background: #ece2cf;
+}
+.rb-tinthover {
+  transition: background 0.16s;
+}
+.rb-tinthover:hover {
+  background: rgba(252, 248, 238, 0.7);
+}
+
+/* muted text → ink on hover */
+.rb-mut {
+  transition: color 0.16s, background 0.16s, border-color 0.16s;
+}
+.rb-mut:hover {
+  color: #2c2a26;
+}
+
+/* preset room card / pill border highlight */
+.rb-bhover {
+  transition: all 0.16s;
+}
+.rb-bhover:hover {
+  border-color: #a96e4f;
+}
+.rb-bhover-soft:hover {
+  border-color: #c9b68f;
+}
+
+.rb-fade {
+  animation: renoFade 0.5s ease both;
+}
+
+/* placeholder colour for the paste / onboarding inputs */
+input::placeholder {
+  color: #9a9079;
+  opacity: 1;
+}
