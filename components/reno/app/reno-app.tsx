@@ -12,6 +12,7 @@ import {
 } from '@/lib/reno/data'
 import { computeApp, type View } from '@/lib/reno/compute'
 import { extractProduct } from '@/lib/reno/extract'
+import { loadState, saveState } from '@/lib/reno/storage'
 import { Onboarding, type OnbState, freshOnb } from './onboarding'
 import { Sidebar } from './sidebar'
 import { AppHeader } from './app-header'
@@ -408,10 +409,16 @@ export function RenoApp({ initialStage = 'app' }: { initialStage?: Stage }) {
   }
 
   const refreshAll = async () => {
-    const links = activeProject()
+    const ids = activeProject()
       .products.filter((p) => !p.bought && p.link)
       .map((p) => p.id)
-    for (const id of links) await refreshProduct(id)
+    // Bounded concurrency: refresh several items at once (fast) without firing
+    // unbounded parallel requests at retailer sites, and don't let one failed
+    // fetch block the rest (allSettled).
+    const CONCURRENCY = 3
+    for (let i = 0; i < ids.length; i += CONCURRENCY) {
+      await Promise.allSettled(ids.slice(i, i + CONCURRENCY).map((id) => refreshProduct(id)))
+    }
   }
 
   // ---------- budget editing ----------
@@ -424,6 +431,32 @@ export function RenoApp({ initialStage = 'app' }: { initialStage?: Stage }) {
     const v = Number(state.budgetDraft)
     patchActive((p) => ({ ...p, budgetTotal: v > 0 ? v : p.budgetTotal }), { budgetModal: false })
   }
+
+  // ---------- persistence (localStorage) ----------
+  // Seed data is used for the very first render (both server and client) so
+  // there's no SSR/hydration mismatch. Once mounted, we swap in anything saved
+  // from a previous visit.
+  //
+  // `hydrated` MUST be React state, not a ref: setState only schedules a
+  // re-render, so a ref flipped to `true` right after calling setState would
+  // let the save-effect below fire on the very same pass — using the stale
+  // pre-load (seed) state, because that scheduled update hasn't applied yet —
+  // and silently overwrite a real saved project with the seed in localStorage.
+  // Using state instead guarantees `hydrated` and the loaded `projects` land
+  // together in the same render, so the save-effect only ever runs once both
+  // are consistent.
+  const [hydrated, setHydrated] = useState(false)
+
+  useEffect(() => {
+    const loaded = loadState()
+    if (loaded) setState((s) => ({ ...s, projects: loaded.projects, activeId: loaded.activeId }))
+    setHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    if (!hydrated) return
+    saveState(state.projects, state.activeId)
+  }, [hydrated, state.projects, state.activeId])
 
   // ---------- count-up animation on scope changes ----------
   const countPrev = useRef<Record<string, number>>({})

@@ -288,13 +288,24 @@ export function computeApp(state: AppState) {
     }))
 
   // ----- overview signals -----
-  const today = new Date(2026, 5, 13)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
   const parseDue = (str: string) => {
     const m = /(\d{1,2})\s+([A-Za-z]{3,})/.exec(str || '')
     if (!m) return null
     const mo = MONTHS[m[2].slice(0, 3).toLowerCase()]
     if (mo == null) return null
-    return Math.round((new Date(2026, mo, +m[1]).getTime() - today.getTime()) / 86400000)
+    // `due` is a free-text string with no year (e.g. "Due 18 Jun"). Assume the
+    // current year unless that reads as more than ~6 months in the past, in
+    // which case treat it as next year's occurrence rather than long overdue.
+    let due = new Date(today.getFullYear(), mo, +m[1])
+    due.setHours(0, 0, 0, 0)
+    const daysDiff = Math.round((due.getTime() - today.getTime()) / 86400000)
+    if (daysDiff < -180) {
+      due = new Date(today.getFullYear() + 1, mo, +m[1])
+      due.setHours(0, 0, 0, 0)
+    }
+    return Math.round((due.getTime() - today.getTime()) / 86400000)
   }
   const buyCand: { type: string; score: number; e: EnrichedProduct; signal: string }[] = []
   scopeProducts

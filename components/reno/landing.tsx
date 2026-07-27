@@ -8,11 +8,11 @@ import {
   Gauge,
   Home,
   Plus,
-  Play,
   Tag,
   TrendingDown,
   User,
 } from './icons'
+import { ProductDemoLoop } from './product-demo'
 
 const START = '/app?start=1'
 
@@ -107,42 +107,14 @@ export function Landing() {
             'background:#FCF8EE; border:1px solid #E3D9C4; border-radius:26px 20px 28px 22px; padding:26px;',
           )}
         >
-          <div
-            style={s(
-              'position:relative; aspect-ratio:16/9; width:100%; border-radius:16px 12px 18px 13px; overflow:hidden; background-color:#ECE2CF; background-image:repeating-linear-gradient(135deg, rgba(169,110,79,0.05) 0 14px, rgba(169,110,79,0) 14px 28px); display:flex; align-items:center; justify-content:center; border:1px solid #EBE1CE;',
-            )}
-          >
-            <div
-              style={s(
-                `position:absolute; top:16px; left:18px; font-family:${MONO}; font-size:10.5px; letter-spacing:0.18em; text-transform:uppercase; color:#B0A691;`,
-              )}
-            >
-              Product demo
-            </div>
-            <div
-              style={s(
-                `position:absolute; top:16px; right:18px; font-family:${MONO}; font-size:10.5px; letter-spacing:0.18em; text-transform:uppercase; color:#B0A691;`,
-              )}
-            >
-              2:00
-            </div>
-            <Link
-              href={START}
-              className="rb-clay"
-              style={s(
-                'display:flex; align-items:center; justify-content:center; width:88px; height:88px; border:none; border-radius:999px; cursor:pointer; animation:renoPulse 3.4s ease-in-out infinite;',
-              )}
-            >
-              <Play size={30} style={{ marginLeft: 4 }} />
-            </Link>
-          </div>
+          <ProductDemoLoop />
         </div>
         <p
           style={s(
             `margin:20px 0 0; text-align:center; font-family:${SERIF}; font-style:italic; font-size:18px; color:#6B6253;`,
           )}
         >
-          See how Reno Board works in 2 minutes.
+          Watch a price drop, and a job move through the board — live, not staged.
         </p>
       </section>
 

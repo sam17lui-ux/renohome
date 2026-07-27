@@ -150,6 +150,248 @@ select:focus {
   animation: rbSpin 0.8s linear infinite;
 }
 
+/* ---- landing-page product demo loops (CSS-only, no video file) ---- */
+
+/* shared loop-boundary fade, used by both demo cards */
+@keyframes demoSceneFade {
+  0% {
+    opacity: 0;
+  }
+  4% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---- card 1: price tracking — paste a link, watch it drop ---- */
+@keyframes demoUrlType {
+  0%,
+  8% {
+    clip-path: inset(0 100% 0 0);
+  }
+  24%,
+  100% {
+    clip-path: inset(0 0% 0 0);
+  }
+}
+@keyframes demoAddClick {
+  0%,
+  25% {
+    transform: scale(1);
+  }
+  29% {
+    transform: scale(0.88);
+  }
+  33%,
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes demoPriceInputOut {
+  0%,
+  30% {
+    opacity: 1;
+  }
+  40%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes demoPriceProductIn {
+  0%,
+  30% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  42%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes demoSparkDraw {
+  0%,
+  44% {
+    stroke-dasharray: 120;
+    stroke-dashoffset: 120;
+  }
+  60%,
+  100% {
+    stroke-dasharray: 120;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes demoPriceOldOut {
+  0%,
+  62% {
+    opacity: 1;
+  }
+  74%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes demoPriceNewIn {
+  0%,
+  62% {
+    opacity: 0;
+  }
+  74%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes demoPillDrop {
+  0%,
+  70% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  80%,
+  90% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- card 2: the board — create a job, drag it across two stages ---- */
+@keyframes demoAddPulse {
+  0%,
+  4% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  8% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+  14%,
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+}
+@keyframes demoJobCardJourney {
+  0%,
+  6% {
+    opacity: 0;
+    transform: scale(0.9) translate(0, 0);
+    box-shadow: none;
+  }
+  16%,
+  40% {
+    opacity: 1;
+    transform: scale(1) translate(0, 0);
+    box-shadow: none;
+  }
+  46% {
+    transform: scale(1) translate(172px, 5px);
+    box-shadow: 0 16px 32px -18px rgba(43, 39, 36, 0.5);
+  }
+  50%,
+  62% {
+    transform: scale(1) translate(172px, 0);
+    box-shadow: none;
+  }
+  70% {
+    transform: scale(1) translate(344px, 5px);
+    box-shadow: 0 16px 32px -18px rgba(43, 39, 36, 0.5);
+  }
+  76%,
+  100% {
+    opacity: 1;
+    transform: scale(1) translate(344px, 0);
+    box-shadow: none;
+  }
+}
+@keyframes demoPillContractor {
+  0%,
+  52% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  60%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes demoPillDue {
+  0%,
+  70% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  80%,
+  90% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.demo-scene {
+  animation: demoSceneFade 7s ease-in-out infinite;
+}
+.demo-url-type {
+  animation: demoUrlType 7s ease-in-out infinite;
+}
+.demo-add-btn {
+  animation: demoAddClick 7s ease-in-out infinite;
+}
+.demo-price-input {
+  animation: demoPriceInputOut 7s ease-in-out infinite;
+}
+.demo-price-product {
+  animation: demoPriceProductIn 7s ease-in-out infinite;
+}
+.demo-spark {
+  animation: demoSparkDraw 7s ease-in-out infinite;
+}
+.demo-price-old {
+  animation: demoPriceOldOut 7s ease-in-out infinite;
+}
+.demo-price-new {
+  animation: demoPriceNewIn 7s ease-in-out infinite;
+}
+.demo-pill-drop {
+  animation: demoPillDrop 7s ease-in-out infinite;
+}
+.demo-add-pulse {
+  animation: demoAddPulse 7s ease-in-out infinite;
+}
+.demo-job-card {
+  animation: demoJobCardJourney 7s ease-in-out infinite;
+}
+.demo-pill-contractor {
+  animation: demoPillContractor 7s ease-in-out infinite;
+}
+.demo-pill-due {
+  animation: demoPillDue 7s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-scene,
+  .demo-url-type,
+  .demo-add-btn,
+  .demo-price-input,
+  .demo-price-product,
+  .demo-spark,
+  .demo-price-old,
+  .demo-price-new,
+  .demo-pill-drop,
+  .demo-add-pulse,
+  .demo-job-card,
+  .demo-pill-contractor,
+  .demo-pill-due {
+    animation: none !important;
+  }
+}
+
 /* placeholder colour for the paste / onboarding inputs */
 input::placeholder {
   color: #9a9079;
