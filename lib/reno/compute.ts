@@ -70,6 +70,8 @@ export function enrichProduct(p: Product) {
     backInStock: !!p.backInStock,
     retailer: p.retailer,
     room: p.room,
+    link: p.link || '',
+    canRefresh: !!p.link,
     listingUrl: p.link || RETAILER_URL[p.retailer] || '#',
   }
 }

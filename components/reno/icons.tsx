@@ -154,6 +154,14 @@ export const LinkChain = (p: IconProps) => (
     <path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8" />
   </Icon>
 )
+export const Refresh = (p: IconProps) => (
+  <Icon sw={2} {...p}>
+    <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+    <path d="M21 3v5h-5" />
+    <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+    <path d="M3 21v-5h5" />
+  </Icon>
+)
 export const Gauge = (p: IconProps) => (
   <Icon sw={1.6} {...p}>
     <path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 9 9" />

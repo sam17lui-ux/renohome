@@ -3,11 +3,13 @@
 import { s } from '@/lib/reno/style'
 import { MONO, SANS, SERIF } from '@/lib/reno/data'
 import type { AppVM, EnrichedProduct } from '@/lib/reno/compute'
-import { Box, Check, LinkChain, Plus, Ticket, TrendingDown, TrendingUp, X } from '../icons'
+import { Box, Check, LinkChain, Plus, Refresh, Ticket, TrendingDown, TrendingUp, X } from '../icons'
 
 export function Shopping({
   vm,
   pasteUrl,
+  fetching,
+  checking,
   onPaste,
   onPasteSubmit,
   onRoom,
@@ -15,9 +17,13 @@ export function Shopping({
   onOpenDetail,
   onToggleBought,
   onDeleteProduct,
+  onRefresh,
+  onRefreshAll,
 }: {
   vm: AppVM
   pasteUrl: string
+  fetching: boolean
+  checking: string[]
   onPaste: (v: string) => void
   onPasteSubmit: (e: React.FormEvent) => void
   onRoom: (room: string) => void
@@ -25,7 +31,11 @@ export function Shopping({
   onOpenDetail: (id: string) => void
   onToggleBought: (id: string) => void
   onDeleteProduct: (id: string) => void
+  onRefresh: (id: string) => void
+  onRefreshAll: () => void
 }) {
+  const anyRefreshable = vm.watchingItems.some((p) => p.canRefresh)
+  const busy = checking.length > 0
   return (
     <div className="rb-fade" style={s('padding:28px 36px 60px; max-width:1040px;')}>
       <form onSubmit={onPasteSubmit} style={s('display:flex; gap:12px; max-width:560px; margin-bottom:22px;')}>
@@ -36,9 +46,9 @@ export function Shopping({
           placeholder="Paste a product link to watch…"
           style={s(`flex:1; background:rgba(252,248,238,0.7); border:1px solid #E3D9C4; border-radius:13px; padding:11px 15px; font-size:13.5px; font-family:${SANS}; color:#2C2A26;`)}
         />
-        <button type="submit" className="rb-clay" style={s(`display:inline-flex; align-items:center; gap:7px; border:none; border-radius:13px; padding:11px 17px; font-size:13.5px; cursor:pointer; font-family:${SANS};`)}>
-          <Plus size={14} />
-          Add product
+        <button type="submit" disabled={fetching} className="rb-clay" style={s(`display:inline-flex; align-items:center; gap:7px; border:none; border-radius:13px; padding:11px 17px; font-size:13.5px; cursor:${fetching ? 'wait' : 'pointer'}; opacity:${fetching ? '0.7' : '1'}; font-family:${SANS};`)}>
+          {fetching ? <Refresh size={14} className="rb-spin" /> : <Plus size={14} />}
+          {fetching ? 'Reading link…' : 'Add product'}
         </button>
       </form>
 
@@ -74,10 +84,33 @@ export function Shopping({
 
       {vm.hasWatching && (
         <>
-          <div style={s(`font-family:${MONO}; font-size:10.5px; letter-spacing:0.18em; text-transform:uppercase; color:#9A9079; margin-bottom:13px;`)}>Watching · {vm.watchingCount}</div>
+          <div style={s('display:flex; align-items:baseline; justify-content:space-between; margin-bottom:13px;')}>
+            <span style={s(`font-family:${MONO}; font-size:10.5px; letter-spacing:0.18em; text-transform:uppercase; color:#9A9079;`)}>Watching · {vm.watchingCount}</span>
+            {anyRefreshable && (
+              <button
+                type="button"
+                onClick={onRefreshAll}
+                disabled={busy}
+                className="rb-mut"
+                title="Re-check live prices"
+                style={s(`display:inline-flex; align-items:center; gap:6px; background:transparent; border:none; font-size:12px; color:#6B6253; cursor:${busy ? 'wait' : 'pointer'}; font-family:${SANS};`)}
+              >
+                <Refresh size={13} className={busy ? 'rb-spin' : undefined} />
+                {busy ? 'Checking prices…' : 'Refresh prices'}
+              </button>
+            )}
+          </div>
           <div style={s('display:flex; flex-direction:column; gap:12px; margin-bottom:34px;')}>
             {vm.watchingItems.map((p) => (
-              <WatchingRow key={p.id} p={p} onOpen={onOpenDetail} onToggleBought={onToggleBought} onDelete={onDeleteProduct} />
+              <WatchingRow
+                key={p.id}
+                p={p}
+                checking={checking.includes(p.id)}
+                onOpen={onOpenDetail}
+                onToggleBought={onToggleBought}
+                onDelete={onDeleteProduct}
+                onRefresh={onRefresh}
+              />
             ))}
           </div>
         </>
@@ -116,14 +149,18 @@ function Sparkline({ p }: { p: EnrichedProduct }) {
 
 function WatchingRow({
   p,
+  checking,
   onOpen,
   onToggleBought,
   onDelete,
+  onRefresh,
 }: {
   p: EnrichedProduct
+  checking: boolean
   onOpen: (id: string) => void
   onToggleBought: (id: string) => void
   onDelete: (id: string) => void
+  onRefresh: (id: string) => void
 }) {
   return (
     <article
@@ -171,6 +208,20 @@ function WatchingRow({
         <div style={s(`margin-top:4px; font-family:${MONO}; font-size:10.5px; color:#9A9079;`)}>target {p.targetLabel}</div>
       </div>
       <div style={s('display:flex; align-items:center; gap:6px; flex:0 0 auto;')}>
+        {p.canRefresh && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onRefresh(p.id)
+            }}
+            title="Re-check live price"
+            className="rb-mut"
+            style={s('width:32px; height:32px; flex:0 0 32px; border:none; background:transparent; color:#B0A691; border-radius:9px; cursor:pointer; display:flex; align-items:center; justify-content:center;')}
+          >
+            <Refresh size={14} className={checking ? 'rb-spin' : undefined} />
+          </button>
+        )}
         <button
           type="button"
           onClick={(e) => {

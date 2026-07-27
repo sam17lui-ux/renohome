@@ -141,6 +141,15 @@ select:focus {
   animation: renoFade 0.5s ease both;
 }
 
+@keyframes rbSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.rb-spin {
+  animation: rbSpin 0.8s linear infinite;
+}
+
 /* placeholder colour for the paste / onboarding inputs */
 input::placeholder {
   color: #9a9079;

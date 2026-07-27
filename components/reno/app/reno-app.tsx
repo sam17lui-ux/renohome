@@ -11,6 +11,7 @@ import {
   type Project,
 } from '@/lib/reno/data'
 import { computeApp, type View } from '@/lib/reno/compute'
+import { extractProduct } from '@/lib/reno/extract'
 import { Onboarding, type OnbState, freshOnb } from './onboarding'
 import { Sidebar } from './sidebar'
 import { AppHeader } from './app-header'
@@ -70,6 +71,9 @@ export type AppUIState = {
   prodModal: boolean
   prodForm: ProdForm
   pasteUrl: string
+  fetching: boolean
+  fetchError: string | null
+  checking: string[]
   budgetModal: boolean
   budgetDraft: string
   onb: OnbState
@@ -95,6 +99,9 @@ export function RenoApp({ initialStage = 'app' }: { initialStage?: Stage }) {
     prodModal: false,
     prodForm: { link: '', name: '', retailer: 'B&Q', room: 'Kitchen', price: '', target: '' },
     pasteUrl: '',
+    fetching: false,
+    fetchError: null,
+    checking: [],
     budgetModal: false,
     budgetDraft: '',
     onb: freshOnb(),
@@ -288,22 +295,63 @@ export function RenoApp({ initialStage = 'app' }: { initialStage?: Stage }) {
     patchActive((p) => ({ ...p, jobs: [...p.jobs, job] }), { jobModal: false })
   }
 
+  const knownRetailer = (r?: string) => (r && RETAILERS.includes(r) ? r : null)
+
   const openProdModal = (link: string) => {
     const rooms = activeProject().rooms
     patch({
       prodModal: true,
+      fetchError: null,
       prodForm: { link: link || '', name: '', retailer: RETAILERS[0], room: rooms[0] || '', price: '', target: '' },
     })
   }
-  const closeProdModal = () => patch({ prodModal: false })
+  const closeProdModal = () => patch({ prodModal: false, fetchError: null })
   const onProdField = (f: keyof ProdForm, v: string) =>
     patch((s) => ({ prodForm: { ...s.prodForm, [f]: v } }))
   const onPaste = (v: string) => patch({ pasteUrl: v })
-  const onPasteSubmit = (e: React.FormEvent) => {
+
+  // paste a link → extract details server-side → open the modal prefilled
+  const onPasteSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    openProdModal(state.pasteUrl)
-    patch({ pasteUrl: '' })
+    const url = state.pasteUrl.trim()
+    if (!url) return
+    const rooms = activeProject().rooms
+    patch({ fetching: true, fetchError: null })
+    const data = await extractProduct(url)
+    patch({
+      fetching: false,
+      pasteUrl: '',
+      prodModal: true,
+      fetchError: data.ok ? null : data.error ?? null,
+      prodForm: {
+        link: url,
+        name: data.name ?? '',
+        retailer: knownRetailer(data.retailer) ?? RETAILERS[0],
+        room: rooms[0] || '',
+        price: data.price != null ? String(data.price) : '',
+        target: '',
+      },
+    })
   }
+
+  // "Fetch from link" inside the modal — fills fields without discarding edits
+  const fetchIntoProdForm = async () => {
+    const url = state.prodForm.link.trim()
+    if (!url) return
+    patch({ fetching: true, fetchError: null })
+    const data = await extractProduct(url)
+    patch((s) => ({
+      fetching: false,
+      fetchError: data.ok ? null : data.error ?? 'Couldn’t read that page.',
+      prodForm: {
+        ...s.prodForm,
+        name: data.name ?? s.prodForm.name,
+        retailer: knownRetailer(data.retailer) ?? s.prodForm.retailer,
+        price: data.price != null ? String(data.price) : s.prodForm.price,
+      },
+    }))
+  }
+
   const submitProd = (e: React.FormEvent) => {
     e.preventDefault()
     const f = state.prodForm
@@ -320,8 +368,50 @@ export function RenoApp({ initialStage = 'app' }: { initialStage?: Stage }) {
       price,
       target,
       history: [price, price],
+      link: f.link.trim() || undefined,
     }
-    patchActive((p) => ({ ...p, products: [prod, ...p.products] }), { prodModal: false })
+    patchActive((p) => ({ ...p, products: [prod, ...p.products] }), { prodModal: false, fetchError: null })
+  }
+
+  // re-check a product's live price; reflect any change in price + history
+  const refreshProduct = async (id: string) => {
+    const prod = activeProject().products.find((p) => p.id === id)
+    if (!prod || !prod.link) return
+    let already = false
+    setState((s) => {
+      if (s.checking.includes(id)) {
+        already = true
+        return s
+      }
+      return { ...s, checking: [...s.checking, id] }
+    })
+    if (already) return
+    const data = await extractProduct(prod.link)
+    setState((s) => ({
+      ...s,
+      checking: s.checking.filter((c) => c !== id),
+      projects: s.projects.map((p) =>
+        p.id === s.activeId
+          ? {
+              ...p,
+              products: p.products.map((x) => {
+                if (x.id !== id) return x
+                if (!data.ok || data.price == null || data.price === x.price) return x
+                const history = [...x.history, data.price].slice(-12)
+                const backInStock = data.inStock === true ? true : x.backInStock
+                return { ...x, price: data.price, history, backInStock }
+              }),
+            }
+          : p,
+      ),
+    }))
+  }
+
+  const refreshAll = async () => {
+    const links = activeProject()
+      .products.filter((p) => !p.bought && p.link)
+      .map((p) => p.id)
+    for (const id of links) await refreshProduct(id)
   }
 
   // ---------- budget editing ----------
@@ -417,6 +507,8 @@ export function RenoApp({ initialStage = 'app' }: { initialStage?: Stage }) {
             <Shopping
               vm={vm}
               pasteUrl={state.pasteUrl}
+              fetching={state.fetching}
+              checking={state.checking}
               onPaste={onPaste}
               onPasteSubmit={onPasteSubmit}
               onRoom={onRoom}
@@ -424,6 +516,8 @@ export function RenoApp({ initialStage = 'app' }: { initialStage?: Stage }) {
               onOpenDetail={onOpenDetail}
               onToggleBought={onToggleBought}
               onDeleteProduct={onDeleteProduct}
+              onRefresh={refreshProduct}
+              onRefreshAll={refreshAll}
             />
           )}
         </main>
@@ -461,6 +555,9 @@ export function RenoApp({ initialStage = 'app' }: { initialStage?: Stage }) {
           form={state.prodForm}
           assignableRooms={vm.rooms}
           retailers={RETAILERS}
+          fetching={state.fetching}
+          fetchError={state.fetchError}
+          onFetchLink={fetchIntoProdForm}
           onField={onProdField}
           onSubmit={submitProd}
           onClose={closeProdModal}

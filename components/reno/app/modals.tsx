@@ -5,7 +5,7 @@ import type { ColumnId } from '@/lib/reno/data'
 import { s } from '@/lib/reno/style'
 import type { AppVM } from '@/lib/reno/compute'
 import type { JobDraft, JobForm, ProdForm } from './reno-app'
-import { Box, Check, ExternalLink, Ticket, TrendingDown, TrendingUp, X } from '../icons'
+import { Box, Check, ExternalLink, Refresh, Ticket, TrendingDown, TrendingUp, X } from '../icons'
 
 type Column = { id: ColumnId; label: string }
 
@@ -107,6 +107,9 @@ export function AddProductModal({
   form,
   assignableRooms,
   retailers,
+  fetching,
+  fetchError,
+  onFetchLink,
   onField,
   onSubmit,
   onClose,
@@ -114,6 +117,9 @@ export function AddProductModal({
   form: ProdForm
   assignableRooms: string[]
   retailers: string[]
+  fetching: boolean
+  fetchError: string | null
+  onFetchLink: () => void
   onField: (f: keyof ProdForm, v: string) => void
   onSubmit: (e: React.FormEvent) => void
   onClose: () => void
@@ -121,10 +127,23 @@ export function AddProductModal({
   return (
     <ModalShell onClose={onClose}>
       <h2 style={s(`margin:0; font-family:${SERIF}; font-size:23px; font-weight:500; color:#2C2A26;`)}>Watch a product</h2>
-      <p style={s('margin:6px 0 0; font-size:13.5px; color:#6B6253; line-height:1.45;')}>We&apos;ll flag it when the price falls or meets your target.</p>
+      <p style={s('margin:6px 0 0; font-size:13.5px; color:#6B6253; line-height:1.45;')}>Paste a link and we&apos;ll pull in the details, then flag it when the price falls or meets your target.</p>
       <form onSubmit={onSubmit} style={s('margin-top:20px; display:flex; flex-direction:column; gap:15px;')}>
         <Field label="Product link (optional)">
-          <input type="url" value={form.link} onChange={(e) => onField('link', e.target.value)} placeholder="https://…" style={s(inputStyle)} />
+          <div style={s('display:flex; gap:8px;')}>
+            <input type="url" value={form.link} onChange={(e) => onField('link', e.target.value)} placeholder="https://…" style={s(inputStyle + ' flex:1; min-width:0;')} />
+            <button
+              type="button"
+              onClick={onFetchLink}
+              disabled={fetching || !form.link.trim()}
+              className="rb-bhover"
+              style={s(`display:inline-flex; align-items:center; gap:6px; white-space:nowrap; background:rgba(169,110,79,0.1); border:1px solid #D2C5A9; color:#a96e4f; border-radius:12px; padding:0 14px; font-size:12.5px; cursor:${fetching || !form.link.trim() ? 'not-allowed' : 'pointer'}; opacity:${fetching || !form.link.trim() ? '0.5' : '1'}; font-family:${SANS};`)}
+            >
+              <Refresh size={14} className={fetching ? 'rb-spin' : undefined} />
+              {fetching ? 'Fetching…' : 'Fetch'}
+            </button>
+          </div>
+          {fetchError && <p style={s('margin:7px 0 0; font-size:12px; color:#A23C2D;')}>{fetchError}</p>}
         </Field>
         <Field label="Product name">
           <input value={form.name} onChange={(e) => onField('name', e.target.value)} placeholder="e.g. Brushed brass mixer tap" style={s(inputStyle)} />
